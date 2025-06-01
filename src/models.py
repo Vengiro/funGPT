@@ -21,13 +21,21 @@ class TransformerBlock(nn.Module):
             nn.Dropout(config.resid_pdrop)
         )
 
+    def forward(self, x):
+        # Normalize the input text + apply attention and add the result to the input
+        x = x + self.attention(self.ln1(x))
+        # Normalize the aware (thanks to the attention) input text + apply a FC layer
+        # and add the result to the input
+        x = x + self.fc(self.ln2(x))
+        return x
+
 
 
 
 class GPTconfig:
     """ base GPT config """
     embd_pdrop = 0.1
-    resid_pdrop = 0.1
+    proj_pdrop = 0.1
     attn_pdrop = 0.1
     rope = False
     bottleneck_dim = None
@@ -45,3 +53,18 @@ class GPT1config(GPTconfig):
     n_layer = 12
     n_head = 12
     n_embd = 768
+
+
+class GPT(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+
+        self.config = config
+        self.vocab_size = config.vocab_size
+        self.block_size = config.block_size
+        self.n_layer = config.n_layer
+        self.n_head = config.n_head
+        self.n_embd = config.n_embd
+
+        # input embedding layer
+        self.embeddings = nn.Embedding(config.vocab_size, config.n_embd)
