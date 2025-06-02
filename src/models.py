@@ -67,4 +67,59 @@ class GPT(nn.Module):
         self.n_embd = config.n_embd
 
         # input embedding layer
+        # all possible tokens are mapped to a vector of size n_embd
         self.embeddings = nn.Embedding(config.vocab_size, config.n_embd)
+        # each position in the input sequence (of max length block_size) is mapped to a learnable vector of size n_embd
+        self.position_emb = nn.Embedding(config.block_size, config.n_embd)
+        # transformer blocks
+        # * operator is used to unpack the list of TransformerBlock instances
+        # [t1, t2, ..., tn] into arguments for nn.Sequential(t1, t2, ..., tn)
+        self.blocks = nn.Sequential(*[TransformerBlock(config) for _ in range(config.n_layer)])
+        # output layer
+        self.output_layer = nn.Linear(config.n_embd, config.vocab_size)
+
+
+    def forward(self, x):
+        # x is a sequence of token indices of shape (batch_size, sequence_length)
+        B, T = x.size()
+        # Get the token embeddings for each token in the sequence
+        token_emb = self.embeddings(x)
+        # Get the position indices for each token in the sequence
+        # arange creates a tensor with values from 0 to T-1
+        # unsqueeze adds a new dimension at the front and expand make it as a matrix of shape (B, T)
+        position_indices = torch.arange(T, device=x.device).unsqueeze(0).expand(B, T)
+        # get position embeddings
+        position_emb = self.position_emb(position_indices)
+        input_emb = token_emb + position_emb
+        # Forward the input through the transformer blocks
+        # then the output is passed through the output layer
+        # Dim of the input to the blocks is (B, T, n_embd)
+        x = self.blocks(input_emb)
+        x = self.output_layer(x)
+        # The output is of shape (B, T, vocab_size)
+        return x
+
+    def infer(self, x):
+        """
+        Predict the next token in the sequence.
+        :param x: input sequence of shape (batch_size, sequence_length)
+        :return: predicted token probabilities of shape (batch_size, sequence_length, vocab_size)
+        """
+
+        # Same thing as forward
+        B, T = x.size()
+        token_emb = self.embeddings(x)
+        position_indices = torch.arange(T, device=x.device).unsqueeze(0).expand(B, T)
+        position_emb = self.position_emb(position_indices)
+        input_emb = token_emb + position_emb
+        x = self.blocks(input_emb)
+
+        # Only feed the last aware token since
+        # we want to predict the next token
+        x = x[:, -1, :]
+        # The output is of shape (B, vocab_size)
+        x = self.output_layer(x)
+        # Apply softmax to get probabilities
+        x = torch.softmax(x, dim=-1)
+        return x
+
