@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+import math
 
 class CausalSelfAttention(nn.Module):
 
@@ -12,7 +13,7 @@ class CausalSelfAttention(nn.Module):
         self.value = nn.Linear(config.n_embd, config.n_embd)
         self.projection = nn.Linear(config.n_embd, config.n_embd)
         self.dropout_attn = nn.Dropout(config.attn_pdrop)
-        self.drop_projection = nn.Dropout(config.proj_pdrop)
+        self.drop_projection = nn.Dropout(config.resid_pdrop)
         self.n_head = config.n_head
         self.n_embd = config.n_embd
         # Boolean for the mask to save memory -> 1 bit per element instead of 32 bits for a float
@@ -44,7 +45,7 @@ class CausalSelfAttention(nn.Module):
 
         # attention = softmax(QK/ sqrt(E)) * V
         # Need masking for causal attention
-        attention_scores = Q @ K.transpose(-2, -1) / (E ** 0.5)
+        attention_scores = Q @ K.transpose(-2, -1) * (1.0 / math.sqrt(K.size(-1)))
         attention_scores = torch.masked_fill(attention_scores, self.mask[:T, :T], float('-inf'))
         attention_probs = torch.softmax(attention_scores, dim=-1)
         attention_probs = self.dropout_attn(attention_probs)

@@ -16,7 +16,7 @@ class TransformerBlock(nn.Module):
         # fc layer post attention
         self.fc = nn.Sequential(
             nn.Linear(config.n_embd, 4 * config.n_embd),
-            nn.GELU(),
+            nn.GELU(approximate='tanh'),  # Use tanh approximation for GELU
             nn.Linear(4 * config.n_embd, config.n_embd),
             nn.Dropout(config.resid_pdrop)
         )
@@ -35,10 +35,9 @@ class TransformerBlock(nn.Module):
 class GPTconfig:
     """ base GPT config """
     embd_pdrop = 0.1
-    proj_pdrop = 0.1
+    resid_pdrop = 0.1
     attn_pdrop = 0.1
-    rope = False
-    bottleneck_dim = None
+
 
     def __init__(self, vocab_size, block_size, **kwargs):
         self.vocab_size = vocab_size
@@ -75,8 +74,26 @@ class GPT(nn.Module):
         # * operator is used to unpack the list of TransformerBlock instances
         # [t1, t2, ..., tn] into arguments for nn.Sequential(t1, t2, ..., tn)
         self.blocks = nn.Sequential(*[TransformerBlock(config) for _ in range(config.n_layer)])
+        # Final normalization layer
+        self.ln_f = nn.LayerNorm(config.n_embd)
         # output layer
         self.output_layer = nn.Linear(config.n_embd, config.vocab_size)
+
+        # Tie the last FC layer with the input embedding layer as in GPT-2
+        # Reduce number of parameters and improve performance by decreasing
+        # distance (dot product) between the semantically similar tokens
+        self.output_layer.weight = self.embeddings.weight
+
+        ## Something went wrong with the initialization of my weights since without this proper initialization the loss
+        # start around 780
+        self.apply(self._init_weights)
+    def _init_weights(self, module):
+        if isinstance(module, nn.Linear):
+            torch.nn.init.normal_(module.weight, mean=0.0, std= 0.02)
+            if module.bias is not None:
+                torch.nn.init.zeros_(module.bias)
+        elif isinstance(module, nn.Embedding):
+            torch.nn.init.normal_(module.weight, mean=0.0, std=0.02)
 
 
     def forward(self, x):
@@ -86,15 +103,16 @@ class GPT(nn.Module):
         token_emb = self.embeddings(x)
         # Get the position indices for each token in the sequence
         # arange creates a tensor with values from 0 to T-1
-        # unsqueeze adds a new dimension at the front and expand make it as a matrix of shape (B, T)
-        position_indices = torch.arange(T, device=x.device).unsqueeze(0).expand(B, T)
+        position_indices = torch.arange(T, device=x.device)
         # get position embeddings
         position_emb = self.position_emb(position_indices)
+        # No need to add dimension to position_indices since it broadcasts automatically
         input_emb = token_emb + position_emb
         # Forward the input through the transformer blocks
         # then the output is passed through the output layer
         # Dim of the input to the blocks is (B, T, n_embd)
         x = self.blocks(input_emb)
+        x = self.ln_f(x)  # Final normalization
         x = self.output_layer(x)
         # The output is of shape (B, T, vocab_size)
         return x

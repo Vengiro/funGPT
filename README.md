@@ -6,7 +6,7 @@ It supports both character-level and token-level autoregressive modeling, and is
 inspired by my deep learning class,Andrej Karpathy's work on nanogpt and 
 the original GPT-2 architecture.
 
-## ✨ Features
+##  Features
 
 - ✅ Autoregressive transformer architecture (GPT-style)
 - ✅ Character-level and token-level modeling modes
@@ -14,11 +14,11 @@ the original GPT-2 architecture.
 - ✅ Positional Encoding (PE) support
 - ✅ Clean modular code, easy to extend or fine-tune
 - ⏳ Rotary Positional Embedding (RoPE) — *coming soon*
-- ⏳ Efficient training with batching and gradient accumulation
+- ✅ Efficient training with batching 
 - ⏳ Trainer and logging system for quick experimentation
 
 
-## 🚀 Motivation
+##  Motivation
 
 This project was born out of curiosity and a desire to deeply understand the internals of transformer-based language models. 
 It started as a school homework on transformers at CMU
@@ -28,7 +28,7 @@ FunGPT is **not** intended to compete with production-grade models —
 it's designed to be minimal, educational, and run on modest hardware (e.g., a single GPU or even CPU with patience!).
 The code is full of comments and explanations to help you and ME grasp the concepts behind the architecture and training process.
 
-## 🛠 Architecture Overview
+##  Architecture Overview
 
 The core architecture mimics GPT-2:
 
@@ -41,7 +41,7 @@ The core architecture mimics GPT-2:
 Currently uses standard sinusoidal or learned positional encodings. 
 Support for [RoPE (Rotary Positional Embeddings)](https://arxiv.org/abs/2104.09864) is planned in a future update.
 
-## 📚 Training
+##  Training
 
 FunGPT includes a flexible training pipeline with:
 
@@ -52,3 +52,5 @@ FunGPT includes a flexible training pipeline with:
 
 Example training scripts are included for character-level modeling and custom corpora.
 
+```bash
+python main.py
