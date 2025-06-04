@@ -1,9 +1,8 @@
 # FunGPT
 
 FunGPT is a lightweight GPT-2 style language model built from scratch in PyTorch, 
-designed for educational exploration and efficient training on limited hardware. 
-It supports both character-level and token-level autoregressive modeling, and is 
-inspired by my deep learning class,Andrej Karpathy's work on nanogpt and 
+designed for educational exploration and efficient training on my RTX 2070. 
+It is heavily inspired by my deep learning class, Andrej Karpathy's excellent work on nanogpt and 
 the original GPT-2 architecture.
 
 ##  Features
