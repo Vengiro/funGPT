@@ -10,9 +10,7 @@ class CustomDataLoader:
         self.batch_size = batch_size
         self.block_size = block_size
         self.shuffle = shuffle
-        self.indices = list(range(len(self.tokenDataset)))
-        # Ensure that the dataset is large enough to create batches
-        self.indices = self.indices[:len(self.indices) - self.block_size * self.batch_size]
+        self.length = len(tokenDataset) - block_size * batch_size
         self.current_index = 0
 
     def __len__(self):
@@ -24,18 +22,18 @@ class CustomDataLoader:
     def __iter__(self):
         if self.shuffle:
             # Random offset to start the iteration
-            self.current_index = random.randint(0, self.block_size * self.batch_size)
+            self.current_index = random.randint(0, self.block_size * self.batch_size - 1)
         else:
             self.current_index = 0
         return self
 
 
     def __next__(self):
-        if  self.current_index + self.batch_size * self.block_size + 1 >= len(self.indices):
+        if  self.current_index >= self.length:
             raise StopIteration
 
 
-        idx = self.indices[self.current_index]
+        idx = self.current_index
         tokens = self.tokenDataset[idx:idx + self.block_size * self.batch_size + 1]
         tokens = torch.tensor(tokens, dtype=torch.long)
         batch_x = tokens[:-1].view(self.batch_size, self.block_size)

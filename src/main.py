@@ -24,8 +24,8 @@ def main():
 
     print(f"Number of tokens in the dataset: {len(tokens)}")
 
-    block_size = 1024
-    batch_size = 1
+    block_size = 32
+    batch_size = 32
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     print(f"Using device: {device}")
 
@@ -34,7 +34,7 @@ def main():
 
     model = GPT(gpt_config)
     model = model.to(device)
-    #model = torch.compile(model, backend="inductor", mode="default")
+    model = torch.compile(model, backend="eager")
     data_loader = CustomDataLoader(tokens, block_size, batch_size=batch_size, shuffle=True)
     trainer = Trainer(trainer_config, model, data_loader, None, device)
     trainer.train()
