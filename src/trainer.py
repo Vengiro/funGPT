@@ -25,6 +25,7 @@ class Trainer:
         self.model.train()  # Set the model to training mode
         for ep in range(self.config.epochs):
             total_loss = 0.0
+            print(f"Number of batches in epoch {ep+1}: {len(self.data_loader)}")
             for batch_idx, (x, y) in enumerate(self.data_loader):
                 tstart = time.time()
 

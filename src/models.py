@@ -39,9 +39,10 @@ class GPTconfig:
     attn_pdrop = 0.1
 
 
-    def __init__(self, vocab_size, block_size, **kwargs):
+    def __init__(self, vocab_size, block_size, device, **kwargs):
         self.vocab_size = vocab_size
         self.block_size = block_size
+        self.device = device
         # If extra parameters are provided, set them as attributes
         # E.g. layers=12, heads=12, embd_dim=768 dict
         for k, v in kwargs.items():

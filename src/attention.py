@@ -17,7 +17,7 @@ class CausalSelfAttention(nn.Module):
         self.n_head = config.n_head
         self.n_embd = config.n_embd
         # Boolean for the mask to save memory -> 1 bit per element instead of 32 bits for a float
-        self.mask = torch.triu(torch.ones(config.block_size, config.block_size), diagonal=1).bool()
+        self.mask = torch.triu(torch.ones(config.block_size, config.block_size), diagonal=1).bool().to(config.device)
 
 
     def forward(self, x):
