@@ -42,7 +42,7 @@ class CustomDataLoader:
 
         return batch_x, batch_y
 
-class FileTokenizer:
+class Tokenizer:
     def __init__(self, data_path, encoder):
         self.data_path = data_path
         self.encoder = encoder
@@ -61,3 +61,20 @@ class FileTokenizer:
     def load_tokens(self, tokens_path):
         tokens = np.load(tokens_path, allow_pickle=True)
         return tokens
+
+    def dataset_vocab(self, tokens_list):
+        """
+        Create a vocabulary from the dataset tokens.
+        Useful for reducing the vocabulary size to only those tokens present in the dataset.
+        """
+        tokens_set = set(tokens_list)
+        vocab_dict = {token: idx for idx, token in enumerate(tokens_set)}
+        new_tokens = [vocab_dict[token] for token in tokens_list]
+        decoder = {idx: token for token, idx in vocab_dict.items()}
+        return new_tokens, len(tokens_set), decoder
+
+    def tokenize(self, text):
+        return self.encoder.encode(text)
+
+    def detokenize(self, tokens):
+        return self.encoder.decode(tokens)

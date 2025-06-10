@@ -9,11 +9,11 @@ the original GPT-2 architecture.
 
 - ✅ Autoregressive transformer architecture (GPT-style)
 - ✅ Character-level and token-level modeling modes
-- ✅ Masked self-attention with causal masking
-- ✅ Positional Encoding (PE) support
+- ✅ Masked self-attention with causal masking or FlashAttention if better GPU support
+- ✅ Positional Encoding (PE)
 - ✅ Clean modular code, easy to extend or fine-tune
 - ⏳ Rotary Positional Embedding (RoPE) — *coming soon*
-- ✅ Efficient training with batching 
+- ✅ Efficient training with batching and mixed precision FP16
 - ⏳ Trainer and logging system for quick experimentation
 
 
@@ -24,7 +24,7 @@ It started as a school homework on transformers at CMU
 and evolved into a hands-on learning tool inspired by Andrej Karpathy's educational examples.
 
 FunGPT is **not** intended to compete with production-grade models — 
-it's designed to be minimal, educational, and run on modest hardware (e.g., a single GPU or even CPU with patience!).
+it's designed to be minimal, educational, and run on modest hardware (e.g., a single GPU).
 The code is full of comments and explanations to help you and ME grasp the concepts behind the architecture and training process.
 
 ##  Architecture Overview

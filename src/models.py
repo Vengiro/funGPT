@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from attention import CausalSelfAttention
+from src.attention import CausalSelfAttention
 
 
 
@@ -118,7 +118,7 @@ class GPT(nn.Module):
         # The output is of shape (B, T, vocab_size)
         return x
 
-    def infer(self, x):
+    def infer(self, x, temp=1.0):
         """
         Predict the next token in the sequence.
         :param x: input sequence of shape (batch_size, sequence_length)
@@ -127,6 +127,10 @@ class GPT(nn.Module):
 
         # Same thing as forward
         B, T = x.size()
+
+        if T > self.block_size:
+            raise ValueError(f"Input sequence length {T} exceeds block size {self.block_size}")
+
         token_emb = self.embeddings(x)
         position_indices = torch.arange(T, device=x.device).unsqueeze(0).expand(B, T)
         position_emb = self.position_emb(position_indices)
@@ -137,7 +141,7 @@ class GPT(nn.Module):
         # we want to predict the next token
         x = x[:, -1, :]
         # The output is of shape (B, vocab_size)
-        x = self.output_layer(x)
+        x = self.output_layer(x) / temp
         # Apply softmax to get probabilities
         x = torch.softmax(x, dim=-1)
         return x
