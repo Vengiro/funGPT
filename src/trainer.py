@@ -1,12 +1,14 @@
 import torch
 import time
+from torch.amp import autocast, GradScaler
 from src.dataset import Tokenizer
 class TrainerConfig:
-     def __init__(self, learning_rate=0.001, batch_size=32, epochs=10):
+     def __init__(self, learning_rate=0.001, batch_size=32, epochs=10, **kwargs):
         self.learning_rate = learning_rate
         self.batch_size = batch_size
         self.epochs = epochs
-
+        for k, v in kwargs.items():
+            setattr(self, k, v)
 
 
 class Trainer:
@@ -25,6 +27,8 @@ class Trainer:
         if input is not None:
             input_tokens = tokenizer.tokenize(input)
 
+        scaler = GradScaler()  # For mixed precision training, if needed
+        # Check if mixed precision is applicable
         self.model.train()  # Set the model to training mode
         for ep in range(self.config.epochs):
             total_loss = 0.0
@@ -33,24 +37,34 @@ class Trainer:
                 tstart = time.time()
 
                 x, y = x.to(self.device), y.to(self.device)
+                if self.config.mixed_precision:
+                    with autocast(enabled=True, device_type=self.device):
+                        outputs = self.model(x)
+                        loss = self.criterion(outputs.view(-1, outputs.size(-1)), y.view(-1))
 
-                # Forward pass
-                outputs = self.model(x)
-                # Cross-entropy loss expects the shape [B*T, Vocab] for outputs and [B*T] for targets
-                # It compares each vocab_size logits against the target token
-                loss = self.criterion(outputs.view(-1, outputs.size(-1)), y.view(-1))
+                    self.optimizer.zero_grad()
+                    scaler.scale(loss).backward()
+                    scaler.step(self.optimizer)
+                    scaler.update()
+                else:
+                    # Forward pass
+                    outputs = self.model(x)
+                    # Cross-entropy loss expects the shape [B*T, Vocab] for outputs and [B*T] for targets
+                    # It compares each vocab_size logits against the target token
+                    loss = self.criterion(outputs.view(-1, outputs.size(-1)), y.view(-1))
 
-                # Backward pass and optimization
-                self.optimizer.zero_grad()
-                loss.backward()
-                self.optimizer.step()
+                    # Backward pass and optimization
+                    self.optimizer.zero_grad()
+                    loss.backward()
+                    self.optimizer.step()
 
                 total_loss += loss.item()
                 tfinish = time.time()
-                #print(f"Time for one batch: {tfinish - tstart:.4f} seconds, Batch Loss: {loss.item():.4f}")
-
+                print(f"Time for one batch: {tfinish - tstart:.4f} seconds, Batch Loss: {loss.item():.4f}")
+            tfinish = time.time()
+            print(f"Time for epoch {ep+1}: {tfinish - tstart:.4f} seconds, Batch Loss: {loss.item():.4f}")
             if input is not None:
-                for _ in range(3):  # Generate 3 samples
+                for _ in range(3):  # Generate 3 samples to see intermediate results
                     print(self.infer(tokenizer, input_tokens, decoder))
 
 

@@ -11,6 +11,7 @@ def main():
     input = "I am a model that can generate"
     dataset_tokens = True  # Set to True if you want to use only dataset tokens
     flash_attention = True  # Set to True if you want to use flash attention with supporting GPUs
+    mixed_precision = True  # Set to True if you want to use mixed precision training
 
     encoder = tiktoken.get_encoding("gpt2")
     print(f"Total number of tokens in the encoder: {encoder.n_vocab}")
@@ -37,7 +38,7 @@ def main():
     print(f"Using device: {device}")
 
     gpt_config = GPT1config(vocab_size=nb_tokens, block_size=block_size, device=device, flash_attention=flash_attention)
-    trainer_config = TrainerConfig(batch_size=batch_size)
+    trainer_config = TrainerConfig(batch_size=batch_size, mixed_precision=mixed_precision)
 
     model = GPT(gpt_config)
     model = model.to(device)
